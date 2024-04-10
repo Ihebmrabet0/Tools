@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resource Collector</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f2f2f2;
+        }
+
+        .container {
+            width: 100%;
+            margin: auto;
+            padding-top: 8px;
+        }
+
+        /* Adjusted .input-group to display inline and modified width */
+        .input-group {
+            display: inline-block;
+            /* Changed */
+            margin-bottom: 4px;
+            width: calc(50% - 4px);
+            /* Changed */
+        }
+
+        .input-group-main {
+            display: inline-block;
+            /* Changed */
+            margin-bottom: 4px;
+            width: 50%;
+            /* Changed */
+        }
+
+        input[type=text] {
+            width: 100%;
+            padding: 8px;
+            margin: 4px 0;
+            display: inline-block;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+
+        button {
+            padding: 8px;
+            margin: 4px 0;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
+        .addResource {
+            width: calc(100%);
+        }
+
+        .reset {
+            width: calc(20%);
+        }
+
+        button {
+            cursor: pointer;
+            background-color: #5cb85c;
+            color: white;
+            display: block;
+            /* Ensure the button is full width */
+        }
+
+        .results {
+            margin-top: 8px;
+            padding: 8px;
+            background-color: white;
+            border-radius: 4px;
+            cursor: pointer;
+            /* Make results clickable */
+        }
+
+        .resource-item {
+            border-bottom: 1px solid #ddd;
+            padding: 8px 0;
+        }
+
+        .resources-field {
+            flex-direction: row;
+        }
+
+        .main {
+            display: flex;
+            justify-content: space-between;
+            flex-direction: row;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="main">
+            <div class="input-group-main">
+                <label for="mainPrompt">Main Prompt:</label>
+                <input type="text" id="mainPrompt" name="mainPrompt" required>
+            </div>
+            <button id="resetBtn" class="reset">Reset</button>
+        </div>
+        <div id="resourceFields"> <!-- Container for dynamic resource fields -->
+            <div class="resources-field">
+                <div class="input-group">
+                    <label for="resourceName">Resource Name:</label>
+                    <input type="text" class="resourceName" name="resourceName" required>
+                </div>
+                <div class="input-group">
+                    <label for="resourceText">Text:</label>
+                    <input type="text" class="resourceText" name="resourceText" required>
+                </div>
+            </div>
+        </div>
+        <button id="addResource" class="addResource">Add Resource</button>
+        <div class="results" id="results">
+            <!-- Resources will be listed here -->
+        </div>
+    </div>
+
+    <script>
+        var resources = [];
+
+        document.getElementById('addResource').addEventListener('click', function () {
+            addResource();
+        });
+
+        document.getElementById('resetBtn').addEventListener('click', function () {
+            reset();
+        });
+
+        document.getElementById('results').addEventListener('click', function () {
+            // Copy results to clipboard when clicked
+            var resultsText = document.getElementById('results').innerText;
+            navigator.clipboard.writeText(resultsText).then(function () {
+            }, function (err) {
+                console.error('Could not copy text: ', err);
+            });
+        });
+
+        function addResource() {
+            var mainPrompt = document.getElementById('mainPrompt').value.trim();
+            var resourceNames = document.querySelectorAll('.resourceName');
+            var resourceTexts = document.querySelectorAll('.resourceText');
+            var lastResourceName = resourceNames[resourceNames.length - 1].value.trim();
+            var lastResourceText = resourceTexts[resourceTexts.length - 1].value.trim();
+
+            resources.push({ name: lastResourceName, text: lastResourceText });
+            updateResults(mainPrompt);
+            // Add new input fields for another resource
+            if (lastResourceName !== '' && lastResourceText !== '') {
+                addResourceFields();
+            }
+
+        }
+
+        function addResourceFields() {
+            var resourceFields = document.getElementById('resourceFields');
+            var newFieldHTML = '<div class="resources-field">' +
+                '<div class="input-group">' +
+                '<input type="text" class="resourceName" name="resourceName" required>' +
+                '</div>' +
+                '<div class="input-group">' +
+                '<input type="text" class="resourceText" name="resourceText" required>' +
+                '</div>' +
+                '</div>';
+            resourceFields.insertAdjacentHTML('beforeend', newFieldHTML);
+        }
+
+        function updateResults(mainPrompt) {
+            var resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML = escapeHtml(mainPrompt);
+
+            resources.forEach(function (resource) {
+                if (resource.name === '' || resource.text === '') {
+                    return;
+                }
+                resultsDiv.innerHTML += '<div class="resource-item">' +
+                    '<strong>' + escapeHtml(resource.name) + ':</strong> ' + escapeHtml(resource.text) +
+                    '</div>';
+            });
+        }
+
+        function escapeHtml(text) {
+            var map = {
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#039;'
+            };
+            return text.replace(/[&<>"']/g, function (m) { return map[m]; });
+        }
+
+        function reset() {
+            document.getElementById('mainPrompt').value = '';
+            document.getElementById('resourceFields').innerHTML = '<div class="resources-field">' +
+                '<div class="input-group">' +
+                '<label for="resourceName">Resource Name:</label>' +
+                '<input type="text" class="resourceName" name="resourceName" required>' +
+                '</div>' +
+                '<div class="input-group">' +
+                '<label for="resourceText">Text:</label>' +
+                '<input type="text" class="resourceText" name="resourceText" required>' +
+                '</div>' +
+                '</div>';
+            document.getElementById('results').innerHTML = '';
+            resources = [];
+        }
+    </script>
+</body>
+
+</html>
